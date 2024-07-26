@@ -2,7 +2,7 @@ apiVersion: apps/v1
 kind: Deployment
 metadata:
   name: go-web-app
-  labels: 
+  labels:
     app: go-web-app
 spec:
   replicas: 3
@@ -11,11 +11,13 @@ spec:
       app: go-web-app
   template:
     metadata:
-      labels:
+      labels: 
         app: go-web-app
     spec:
       containers:
         - name: go-web-app
           image: vaibhav5252/go-web-app:{{ .Values.image.tag }}
-          ports:
+          ports: 
             - containerPort: 8080
+
+           

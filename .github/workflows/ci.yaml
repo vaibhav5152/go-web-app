@@ -7,9 +7,6 @@ on:
     paths-ignore:
       - 'README.md'
       - 'helm/**'
-  # pull_requests:
-  #   branches:
-  #     - main
 
 jobs:
 
@@ -92,7 +89,3 @@ jobs:
           git add helm/go-web-app-chart/values.yaml
           git commit -m "Update tag in Helm chart"
           git push
-
-
-
-     
