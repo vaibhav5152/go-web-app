@@ -1,0 +1,86 @@
+name: CI
+
+on:
+  push:
+    branches:
+      - main
+  # pull_requests:
+  #   branches:
+  #     - feat/app:v1
+  paths-ignore:
+    - 'README.md'
+
+jobs:
+
+  scan-for-secrets:
+    runs-on: ubuntu-latest
+
+  steps:
+    - name: Checkout
+      uses: actions/checkout@v4
+
+    - name: Installing Pre-requsites
+      run: |
+        sudo apt-get update -qy
+        sudo apt-get install -y python3 python3-pip python3-venv jq
+
+    - name: RUn secrects scan
+      runs: |
+        python3 -m venv myenv
+        source myenv/bin/activate
+        pip install detect-secrets
+        detect-secrets scan --exclude-files README.md | jq -r 'results | .[]''
+
+  build:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up go-lang
+        uses: actions/setup-go@v2
+        with:
+          go-version: 1.22
+
+      - name: Build
+        run: go build -o go-web-app
+
+      - name: Test
+        run: go test ./...
+
+  sonarqube:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Set up JDK 11
+        uses: actions/setup-java@v2
+        with:
+          java-version: '11'
+
+      - name: Cache SonarQube packages
+        uses: actions/cache@v2
+        with:
+          path: ~/.sonar/cache
+          key: ${{ runner.os }}-sonar-cache
+          restore-keys: |
+            ${{ runner.os }}-sonar-cache
+
+      - name: Install SonarQube scanner
+        run: |
+          curl -sSLo sonar-scanner.zip https://binaries.sonarsource.com/Distribution/sonar-scanner-cli/sonar-scanner-cli-4.6.2.2472-linux.zip
+          unzip sonar-scanner.zip -d $HOME
+          export PATH=$HOME/sonar-scanner-4.6.2.2472-linux/bin:$PATH
+
+      - name: Run SonarQube analysis
+        env:
+          SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
+        run: |
+          sonar-scanner \
+            -Dsonar.projectKey=my_project_key \
+            -Dsonar.sources=. \
+            -Dsonar.host.url=http://52.66.238.135:9000 \
+            -Dsonar.login=${{ secrets.SONAR_TOKEN }}
